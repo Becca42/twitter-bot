@@ -23,19 +23,21 @@ def get_all_tweets(user):
     alltweets = []
 
     #make initial request for most recent tweets (200 is the maximum allowed count)
-    new_tweets = api.user_timeline(user, 200)
+    new_tweets = api.user_timeline(user, count=200)
 
     #save most recent tweets
     alltweets.extend(new_tweets)
+    print alltweets[0].text
 
     #save the id of the oldest tweet less one
     oldest = alltweets[-1].id - 1
 
+    print "starting loop"
     #keep grabbing tweets until there are no tweets left to grab
     while len(new_tweets) > 0:
 
         #all subsiquent requests starting with oldest
-        new_tweets = api.user_timeline(user, 200, oldest)
+        new_tweets = api.user_timeline(user, count=200, max_id=oldest)
 
         #save most recent tweets
         alltweets.extend(new_tweets)
@@ -43,4 +45,24 @@ def get_all_tweets(user):
         #update the id of the oldest tweet less one
         oldest = alltweets[-1].id - 1
 
+    print alltweets[-1].text
+    print len(alltweets)
     return alltweets
+
+
+if __name__ == '__main__':
+    user = 14294848  # @snopes
+    news1 = 807095  # @nytimes
+    news2 = 1367531  # @FoxNews
+    news3 = 1652541  # @Reuters
+    news4 = 457984599  # @BreitbartNews
+    news5 = 2467791  # @washingtonpost
+
+    # grab all tweets from user
+    userHistory = get_all_tweets(user)
+
+    news1History = get_all_tweets(news1)
+    news2History = get_all_tweets(news2)
+    news3History = get_all_tweets(news3)
+    news4History = get_all_tweets(news4)
+    news5History = get_all_tweets(news5)
