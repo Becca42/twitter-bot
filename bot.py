@@ -47,6 +47,32 @@ def get_all_tweets(user, alltweets):
     print len(alltweets)
 
 
+def date_posted(tweet):
+    """ Returns the date that status object tweet was created
+
+        Inputs:
+            status obj. -- tweet -- a tweet rep. as a status obj.
+        Returns:
+            datetime.date -- the date the tweet was created (posted)
+    """
+    return tweet.created_at.date()
+
+
+def group_by_date(sourceTweets):
+    """ Returns a dictionary grouping user tweets with associated context.
+        Context of a tweet is 5 closest tweets (by time) from each news source
+        (25 total tweets).
+
+        Inputs:
+            sourceTweets -- list of lists of status objects -- list of all
+                tweets from user and contexts [[all users], [all source 1],...]
+        Returns:
+            dictionary (tweetid, list of tweet ids) -- dictionary of contexts
+                for each user tweet, stored by unique ids
+    """
+    # TODO implement this function
+
+
 if __name__ == '__main__':
     user = 14294848  # @snopes
     news1 = 807095  # @nytimes
@@ -83,5 +109,3 @@ if __name__ == '__main__':
     t3.join()
     t4.join()
     t5.join()
-
-    print len(userHistory)
