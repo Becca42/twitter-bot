@@ -18,7 +18,7 @@ TODO 2 -- gather user data -- Done
 TODO 3 -- split into training and test set --
 	TODO 3.a decide what to test on (e.g. snopes + trending hashtags, snopes + 5-10 other news sources) -- Done (other news twitters)
 	TODO 3.b -- get data from "environment" users -- Done (nytimes, foxnews, reuters, breitbart, wapo)
-	TODO 3.b.i -- parallelize requests to speed up process -- In Progress
+	TODO 3.b.i -- parallelize requests to speed up process -- Done
 	TODO 3.c -- partition by date -- 
 TODO 4 -- set up neural net -- In Progress?
 	TODO 4.a -- 

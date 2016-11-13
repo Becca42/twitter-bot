@@ -1,5 +1,6 @@
 from secrets import *
 import tweepy
+import threading
 
 auth = tweepy.OAuthHandler(C_KEY, C_SECRET)
 auth.set_access_token(A_TOKEN, A_TOKEN_SECRET)
@@ -7,8 +8,8 @@ auth.set_access_token(A_TOKEN, A_TOKEN_SECRET)
 api = tweepy.API(auth)
 
 
-def get_all_tweets(user):
-    """ Returns list of all tweets posted by user with screen-name "user"
+def get_all_tweets(user, alltweets):
+    """ Modifies alltweets to contain all tweets posted by user with screen-name "user"
 
         Input:
             string -- user -- user name of a given twitter account
@@ -18,9 +19,6 @@ def get_all_tweets(user):
         Code adapted from https://gist.github.com/yanofsky/5436496 """
 
     #TODO check that user is a valid screen name??
-
-    #initialize a list to hold all the tweepy Tweets
-    alltweets = []
 
     #make initial request for most recent tweets (200 is the maximum allowed count)
     new_tweets = api.user_timeline(user, count=200)
@@ -47,7 +45,6 @@ def get_all_tweets(user):
 
     print alltweets[-1].text
     print len(alltweets)
-    return alltweets
 
 
 if __name__ == '__main__':
@@ -59,10 +56,32 @@ if __name__ == '__main__':
     news5 = 2467791  # @washingtonpost
 
     # grab all tweets from user
-    userHistory = get_all_tweets(user)
+    userHistory = []
+    tu = threading.Thread(target=get_all_tweets, args=(user, userHistory))
+    # get all tweets from context users
+    news1History = []
+    t1 = threading.Thread(target=get_all_tweets, args=(news1, news1History))
+    news2History = []
+    t2 = threading.Thread(target=get_all_tweets, args=(news2, news2History))
+    news3History = []
+    t3 = threading.Thread(target=get_all_tweets, args=(news3, news3History))
+    news4History = []
+    t4 = threading.Thread(target=get_all_tweets, args=(news4, news4History))
+    news5History = []
+    t5 = threading.Thread(target=get_all_tweets, args=(news5, news5History))
 
-    news1History = get_all_tweets(news1)
-    news2History = get_all_tweets(news2)
-    news3History = get_all_tweets(news3)
-    news4History = get_all_tweets(news4)
-    news5History = get_all_tweets(news5)
+    # run threads
+    tu.start()
+    t1.start()
+    t2.start()
+    t3.start()
+    t4.start()
+    t5.start()
+    tu.join()
+    t1.join()
+    t2.join()
+    t3.join()
+    t4.join()
+    t5.join()
+
+    print len(userHistory)
