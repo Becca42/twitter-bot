@@ -16,7 +16,8 @@ def get_all_tweets(user, alltweets):
         Returns:
             list of Status objects -- all tweets of user (max 3240)
 
-        Code adapted from https://gist.github.com/yanofsky/5436496 """
+        Code adapted from https://gist.github.com/yanofsky/5436496
+    """
 
     #TODO check that user is a valid screen name??
 
@@ -58,19 +59,101 @@ def date_posted(tweet):
     return tweet.created_at.date()
 
 
+def binary_search_tweets_by_date(tweets, targetDate, start, end):
+    """ Version of binary search the searches a list tweets and returns the
+    index of the tweet with datetime closest to targetDate. If no tweet has
+     the same datetime, then it returns the index of the tweet with the closest
+     datetime that is less than targetDate.
+
+     Inputs:
+        list of status objs. -- tweets -- list of status objects to search
+        datetime -- targetDate -- datetime to match
+        int -- start -- lower bound of current search area in tweets
+        int -- end -- upper bound of current search area in tweets
+    Returns:
+        int - index of closest tweet that is at or before datetime
+    """
+    # no exact match in tweets
+    if (start > end):
+        # TODO will this cover edge cases?? (end and beginning of list?)
+        return start - 1
+
+    middle = (start + end) / 2
+    value = tweets[middle].created_at
+
+    if value < targetDate:
+        return binarySearchTweetsByDate(tweets, targetDate, middle+1, end)
+    if value > targetDate:
+        return binarySearchTweetsByDate(tweets, targetDate, start, middle-1)
+    # found exact match
+    return middle
+
+
+def get_n_neighbors(values, index, n):
+    """ Returns a list of the n closest objects in values to index.
+
+        Inputs:
+            list -- values -- list to get neighbors from
+            int -- index -- index to source neighbors around
+            int -- n -- (even) number of neighbors to return
+        Returns:
+            list -- list of n closest neighbors to index in values
+    """
+    neighbors = []
+    diff = 0
+    # check that n/2 lower neighbors exist
+    if index >= (n/2):
+        for i in range(n/2):
+            neighbors.append(values[index - i])
+    # add as many as possible, add extra from end if possible
+    else:
+        diff = (n/2) - index
+        for i in range((n/2) - diff):
+            neighbors.append(values[index - i])
+    # check that n/2 + diff upper neighbors exist
+    if len(values) > (index + n/2 + diff):
+        for i in range(n/2):
+            neighbors.append(values[index - i])
+    # not enough stuff, add as many as possible
+    else:
+        diffUpp = (len(values) - 1) - index
+        for i in range(diffUpp):
+            neighbors.append(values[index + i])
+    return neighbors
+
+
 def group_by_date(sourceTweets):
     """ Returns a dictionary grouping user tweets with associated context.
         Context of a tweet is 5 closest tweets (by time) from each news source
         (25 total tweets).
 
         Inputs:
-            sourceTweets -- list of lists of status objects -- list of all
+            list of lists of status objects -- sourceTweets -- list of all
                 tweets from user and contexts [[all users], [all source 1],...]
         Returns:
             dictionary (tweetid, list of tweet ids) -- dictionary of contexts
                 for each user tweet, stored by unique ids
     """
-    # TODO implement this function
+    # init diction of context for each tweet
+    contextByTweet = {}
+    # get list of user tweets
+    userTweets = sourceTweets[0]
+
+    # get all context tweets
+    contextTweets = sourceTweets[1:]
+
+    for status in userTweets:
+        tweetId = status.id  # int
+        tweetDatetime = status.created_at  # datetime obj
+        context = []
+        # find five closest tweets form each context (by time)
+        for source in contextTweets:
+            # get context tweet closest (at or before) status
+            closest = binary_search_tweets_by_date(source, tweetDatetime, 0, len(source - 1))
+            # get 4 neighbors (2 before and 2 after if possible, or closest)
+            neighbors = get_four_neighbors(source, closest, 4)
+        # add context with tweet to dict
+        contextByTweet[tweetId] = Context
 
 
 if __name__ == '__main__':
