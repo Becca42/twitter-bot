@@ -110,9 +110,9 @@ def get_n_neighbors(values, index, n):
         diff = (n/2) - index
         for i in range((n/2) - diff):
             neighbors.append(values[index - i])
-    # check that n/2 + diff upper neighbors exist
+    # check that n/2 + diff upper neighbors exist, add them
     if len(values) > (index + n/2 + diff):
-        for i in range(n/2):
+        for i in range(n/2 + diff):
             neighbors.append(values[index - i])
     # not enough stuff, add as many as possible
     else:
@@ -131,8 +131,8 @@ def group_by_date(sourceTweets):
             list of lists of status objects -- sourceTweets -- list of all
                 tweets from user and contexts [[all users], [all source 1],...]
         Returns:
-            dictionary (tweetid, list of tweet ids) -- dictionary of contexts
-                for each user tweet, stored by unique ids
+            dictionary (tweetid, list of status objs.) -- dictionary of contexts
+                for each user tweet, keyed by unique ids
     """
     # init diction of context for each tweet
     contextByTweet = {}
@@ -152,8 +152,12 @@ def group_by_date(sourceTweets):
             closest = binary_search_tweets_by_date(source, tweetDatetime, 0, len(source - 1))
             # get 4 neighbors (2 before and 2 after if possible, or closest)
             neighbors = get_four_neighbors(source, closest, 4)
+            # build context
+            context = neighbors.append(closest)
         # add context with tweet to dict
-        contextByTweet[tweetId] = Context
+        contextByTweet[tweetId] = context
+
+    return contextByTweet
 
 
 if __name__ == '__main__':
