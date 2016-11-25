@@ -1,6 +1,7 @@
 from secrets import *
 import tweepy
 import threading
+import re  # regex library
 
 auth = tweepy.OAuthHandler(C_KEY, C_SECRET)
 auth.set_access_token(A_TOKEN, A_TOKEN_SECRET)
@@ -160,6 +161,32 @@ def group_by_date(sourceTweets):
     return contextByTweet
 
 
+def cleanse_urls(tweets):
+    """ identify and replace urls in tweets
+
+        Inputs:
+            list of strings -- tweets -- list of tweets
+        Returns:
+            list of strings -- tweets with urls replaced with "URL"
+    """
+    cleansed = []
+    # set up url regex
+    # regex pattern from http://stackoverflow.com/questions/6883049/regex-to-find-urls-in-string-in-python
+    regURL = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+    # for each tweet object find and replace any urls
+    for tweet in tweets:
+        # split tweet into list
+        tList = tweet.text.split()
+        for i in range(len(tList)):
+            match = regURL.match(tList[i])
+            if match:
+                tList[i] = "URL"
+        # rejoin updated list into string, add to cleansed list
+        tweet.text = ' '.join(tList)
+        cleansed.append(tweet)
+    return cleansed
+
+
 if __name__ == '__main__':
     user = 14294848  # @snopes
     news1 = 807095  # @nytimes
@@ -184,15 +211,13 @@ if __name__ == '__main__':
     t5 = threading.Thread(target=get_all_tweets, args=(news5, news5History))
 
     # run threads
-    tu.start()
-    t1.start()
-    t2.start()
-    t3.start()
-    t4.start()
-    t5.start()
-    tu.join()
-    t1.join()
-    t2.join()
-    t3.join()
-    t4.join()
-    t5.join()
+    threads = [tu, t1, t2, t3, t4, t5]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
+
+    # clean urls of all tweets
+    allTweets = [userHistory, news1History, news2History, news3History, news4History, news5History]
+    for i in range(len(allTweets)):
+        allTweets[i] = cleanse_urls(allTweets[i])
