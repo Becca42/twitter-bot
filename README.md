@@ -12,6 +12,10 @@ http://stackoverflow.com/questions/6883049/regex-to-find-urls-in-string-in-pytho
 CONCEPTUAL HELP FROM:
 http://colah.github.io/posts/2015-08-Understanding-LSTMs/ :: (Understanding LSTM Networks)
 https://www.youtube.com/watch?v=hWgGJeAvLws :: (TensorFlow RNN mini-tutorial)
+https://arxiv.org/pdf/1409.2329.pdf :: (Recurrent Neural Network Regularization)
+http://karpathy.github.io/2015/05/21/rnn-effectiveness/ :: (The Unreasonable Effectiveness of Recurrent Neural Networks)
+http://lauragelston.ghost.io/speakeasy-pt2/ :: (BUILDING A CHATBOT, PT. 2: BUILDING A CONVERSATIONAL TENSORFLOW MODEL)
+http://suriyadeepan.github.io/2016-06-28-easy-seq2seq/ :: (Chatbots with Seq2Seq)
 
 INSPIRATION FROM:
 https://chatbotsmagazine.com/the-guide-to-designing-a-magical-chatbot-experience-part-1-efbf32444448#.c0zwiv4e3 :: (The Guide To Designing A Magical Chatbot Experience — Part 1)
@@ -26,7 +30,12 @@ TODO 3 -- split into training and test set --
 	TODO 3.b -- get data from "environment" users -- Done (nytimes, foxnews, reuters, breitbart, wapo)
 	TODO 3.b.i -- parallelize requests to speed up process -- Done
 	TODO 3.c -- partition by date -- Done
-	TODO 3.d -- prepare data (e.g. remove &amp, condense urls) -- 
-TODO 4 -- set up neural net -- In Progress?
-	TODO 4.a -- 
-TODO 5 -- 
+	TODO 3.d -- remove URLs -- Done
+	TODO 3.e -- remove &amp etc. -- 
+TODO 4 -- adapt data_utils for this project
+	TODO 4.a -- implement bucketing --
+	TODO
+TODO 5 -- set up neural net -- In Progress?
+	TODO 4.a -- import tensorflow -- Done
+	TODO 4.b -- 
+TODO 6 -- 
