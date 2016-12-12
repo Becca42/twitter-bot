@@ -39,9 +39,9 @@ auth.set_access_token(A_TOKEN, A_TOKEN_SECRET)
 # Construct the API instance
 api = tweepy.API(auth)
 
-#####################################################
-# functions from tensorflow example file data_utils #
-#####################################################
+#############################################################
+# functions adapted from tensorflow example file data_utils #
+#############################################################
 
 # TODO call this on all tweets
 def basic_tokenizer(sentence):
@@ -382,18 +382,41 @@ def download_and_prepare():
     for i in range(len(allTweets)):
         allTweets[i] = cleanse_urls(allTweets[i])
 
+    ##################################################################
+    # following code adapted from tensorflow example file data_utils #
+    ##################################################################
+
     # TODO build vocab
 
     # set paths for storing data
     data_dir = "tweet_data"
+    train_dir = "tweet_train"
+    train_path = os.path.join(data_dir, "context")
+    dev_path = os.path.join(data_dir, "test1")
      # set vocab size
     vocab_size = 500000  # TODO update if necessary
 
-    context_path = os.path.join(data_dir, "vocab%d.context" % vocab_size)
     user_path = os.path.join(data_dir, "vocab%d.user" % vocab_size)
+    context_path = os.path.join(data_dir, "vocab%d.context" % vocab_size)
     create_vocabulary(context_path, train_path + ".context", vocab_size, None)  # None: user default tokenizer
     create_vocabulary(user_path, train_path + ".user", vocab_size, None)
 
     # TOOD tokenize
+    # Create token ids for the training data.
+    user_train_ids_path = train_path + (".ids%d.user" % vocab_size)
+    context_train_ids_path = train_path + (".ids%d.context" % vocab_size)
+    data_to_token_ids(train_path + ".user", user_train_ids_path, user_path, None)
+    data_to_token_ids(train_path + ".en", en_train_ids_path, en_vocab_path, None)
+
+    print("made it")
+
+    # Create token ids for the development data.
+    user_dev_ids_path = dev_path + (".ids%d.user" % vocab_size)
+    context_dev_ids_path = dev_path + (".ids%d.context" % vocab_size)
+    data_to_token_ids(dev_path + ".fr", user_dev_ids_path, user_path, None)
+    data_to_token_ids(dev_path + ".en", context_dev_ids_path, context_path, None)
 
     # TODO return paths to directories of input and output
+    return (user_train_ids_path, context_train_ids_path,
+          context_dev_ids_path, user_dev_ids_path,
+          context_path, user_path)
