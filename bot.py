@@ -11,7 +11,6 @@ import tarfile
 from six.moves import urllib
 
 from tensorflow.python.platform import gfile
-#################
 
 from secrets import *
 import tweepy
@@ -33,7 +32,10 @@ UNK_ID = 3
 # Regular expressions used to tokenize.
 _WORD_SPLIT = re.compile(b"([.,!?\"':;)(])")
 _DIGIT_RE = re.compile(br"\d")
-#################
+
+# set vocab size
+vocab_size = 500000  # TODO update if necessary
+
 auth = tweepy.OAuthHandler(C_KEY, C_SECRET)
 auth.set_access_token(A_TOKEN, A_TOKEN_SECRET)
 # Construct the API instance
@@ -88,6 +90,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
                         vocab[word] = 1
             vocab_list = _START_VOCAB + sorted(vocab, key=vocab.get, reverse=True)
             if len(vocab_list) > max_vocabulary_size:
+                print("vocab too big")
                 vocab_list = vocab_list[:max_vocabulary_size]
             with gfile.GFile(vocabulary_path, mode="wb") as vocab_file:
                 for w in vocab_list:
@@ -230,6 +233,7 @@ def date_posted(tweet):
         Returns:
             datetime.date -- the date the tweet was created (posted)
     """
+    print(tweet.created_at.date())
     return tweet.created_at.date()
 
 
@@ -250,20 +254,22 @@ def binary_search_tweets_by_date(tweets, targetDate, start, end):
     # no exact match in tweets
     if (start > end):
         # TODO will this cover edge cases?? (end and beginning of list?)
+        print("closest? %d" % (start - 1))
         return start - 1
 
     middle = int((start + end) / 2)
     value = tweets[middle].created_at
 
-    if value < targetDate:
-        return binary_search_tweets_by_date(tweets, targetDate, middle+1, end)
     if value > targetDate:
+        return binary_search_tweets_by_date(tweets, targetDate, middle+1, end)
+    if value < targetDate:
         return binary_search_tweets_by_date(tweets, targetDate, start, middle-1)
     # found exact match
+    print("middle: %d" % middle)
     return middle
 
 
-def get_n_neighbors(values, index, n): # TODO is broken, only returns None - must fix
+def get_n_neighbors(values, index, n): # TODO returning same tweets every time?
     """ Returns a list of the n closest objects in values to index.
 
         Inputs:
@@ -327,6 +333,12 @@ def group_by_date(sourceTweets):
         # find five closest tweets form each context (by time)
         for source in contextTweets:
             # get context tweet closest (at or before) status
+            print("targetDate:")
+            print(tweetDatetime)
+            print("earliest: ")
+            print(source[0].created_at)
+            print("latest:")
+            print(source[-1].created_at)
             closest = binary_search_tweets_by_date(source, tweetDatetime, 0, len(source) - 1)
             # get 4 neighbors (2 before and 2 after if possible, or closest)
             neighbors = get_n_neighbors(source, closest, 4)
@@ -410,7 +422,7 @@ def data_to_file(tweets, tweetsTest, alltweets, user_path_train, context_path_tr
         # concatenate all context tweets into one string
         tweet = ""
         for t in c:
-            tweet += t.text
+            tweet = tweet + " " + t.text
         # write mega-tweet to file
         context_file.write(tweet + "\n")
     context_file.close()
@@ -435,7 +447,7 @@ def data_to_file(tweets, tweetsTest, alltweets, user_path_train, context_path_tr
         # concatenate all context tweets into one string
         tweet = ""
         for t in c:
-            tweet += t.text
+            tweet = tweet + " " + t.text
         # write mega-tweet to file
         context_file_dev.write(tweet + "\n")
     context_file_dev.close()
@@ -503,12 +515,10 @@ def download_and_prepare():
     train_dir = "train_dir"
     train_path = os.path.join(train_dir, "train")
     dev_path = os.path.join(train_dir, "test1")
-     # set vocab size
-    vocab_size = 500000  # TODO update if necessary
 
     # paths for storing initial data
-    user_file_path = os.path.join(data_dir, ".data.user")
-    context_file_path = os.path.join(data_dir, ".data.context")
+    user_file_path = os.path.join(data_dir, "data.user")
+    context_file_path = os.path.join(data_dir, "data.context")
 
     # move data into expected directories/make data available
     data_to_file(context_dict, context_dict_valid, allTweets, user_file_path, context_file_path, dev_path + ".user", dev_path + ".context")

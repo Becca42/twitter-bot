@@ -73,8 +73,10 @@ FLAGS = tf.app.flags.FLAGS
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
 #_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
-# updated buckets for heftier data ;)
-_buckets = [(25, 10), (100, 25), (250, 35), (300, 50)]
+# updated buckets for heftier data ;) attempt 1
+#_buckets = [(25, 10), (100, 25), (250, 35), (300, 50)]
+# bucket resizing attept 2
+_buckets = [(50, 25), (100, 30), (250, 35), (300, 50)]
 
 
 def read_data(source_path, target_path, max_size=None):
@@ -110,7 +112,6 @@ def read_data(source_path, target_path, max_size=None):
         target_ids.append(bot.EOS_ID)
         for bucket_id, (source_size, target_size) in enumerate(_buckets):
           if len(source_ids) < source_size and len(target_ids) < target_size:
-          	print("in here!!!!!!")
           	data_set[bucket_id].append([source_ids, target_ids])
           	break
         source, target = source_file.readline(), target_file.readline()
@@ -229,12 +230,12 @@ def decode():
     model.batch_size = 1  # We decode one sentence at a time.
 
     # Load vocabularies.
-    en_vocab_path = os.path.join(FLAGS.data_dir,
-                                 "vocab%d.en" % FLAGS.en_vocab_size)
-    fr_vocab_path = os.path.join(FLAGS.data_dir,
-                                 "vocab%d.fr" % FLAGS.fr_vocab_size)
-    en_vocab, _ = bot.initialize_vocabulary(en_vocab_path)
-    _, rev_fr_vocab = bot.initialize_vocabulary(fr_vocab_path)
+    user_vocab_path = os.path.join(FLAGS.data_dir,
+                                 "vocab%d.user" % bot.vocab_size)
+    context_vocab_path = os.path.join(FLAGS.data_dir,
+                                 "vocab%d.context" % bot.vocab_size)
+    user_vocab, _ = bot.initialize_vocabulary(user_vocab_path)
+    _, rev_context_vocab = bot.initialize_vocabulary(context_vocab_path)
 
     # Decode from standard input.
     sys.stdout.write("> ")
@@ -242,7 +243,7 @@ def decode():
     sentence = sys.stdin.readline()
     while sentence:
       # Get token-ids for the input sentence.
-      token_ids = bot.sentence_to_token_ids(tf.compat.as_bytes(sentence), en_vocab)
+      token_ids = bot.sentence_to_token_ids(tf.compat.as_bytes(sentence), user_vocab)
       # Which bucket does it belong to?
       bucket_id = len(_buckets) - 1
       for i, bucket in enumerate(_buckets):
@@ -250,7 +251,7 @@ def decode():
           bucket_id = i
           break
       else:
-        logging.warning("Sentence truncated: %s", sentence) 
+        logging.warning("Sentence truncated: %s", sentence)
 
       # Get a 1-element batch to feed the sentence to the model.
       encoder_inputs, decoder_inputs, target_weights = model.get_batch(
@@ -264,7 +265,7 @@ def decode():
       if bot.EOS_ID in outputs:
         outputs = outputs[:outputs.index(bot.EOS_ID)]
       # Print out French sentence corresponding to outputs.
-      print(" ".join([tf.compat.as_str(rev_fr_vocab[output]) for output in outputs]))
+      print(" ".join([tf.compat.as_str(rev_context_vocab[output]) for output in outputs]))
       print("> ", end="")
       sys.stdout.flush()
       sentence = sys.stdin.readline()
