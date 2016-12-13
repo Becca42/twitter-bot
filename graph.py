@@ -39,7 +39,7 @@ import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-from tensorflow.models.rnn.translate import data_utils
+#from tensorflow.models.rnn.translate import data_utils
 from tensorflow.models.rnn.translate import seq2seq_model
 
 
@@ -101,7 +101,7 @@ def read_data(source_path, target_path, max_size=None):
           sys.stdout.flush()
         source_ids = [int(x) for x in source.split()]
         target_ids = [int(x) for x in target.split()]
-        target_ids.append(data_utils.EOS_ID)
+        target_ids.append(bot.EOS_ID)
         for bucket_id, (source_size, target_size) in enumerate(_buckets):
           if len(source_ids) < source_size and len(target_ids) < target_size:
             data_set[bucket_id].append([source_ids, target_ids])
@@ -139,8 +139,7 @@ def train():
   """Train a en->fr translation model using WMT data."""
   # Prepare WMT data.
   print("Preparing WMT data in %s" % FLAGS.data_dir)
-  en_train, fr_train, en_dev, fr_dev, _, _ = data_utils.prepare_wmt_data(
-      FLAGS.data_dir, FLAGS.en_vocab_size, FLAGS.fr_vocab_size)
+  context_train, user_train, context_dev, user_dev, _, _ = download_and_prepare() # TODO rename and replace return values
 
   print("returned")
 

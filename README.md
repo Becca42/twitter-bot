@@ -32,10 +32,9 @@ TODO 3 -- split into training and test set --
 	TODO 3.c -- partition by date -- Done
 	TODO 3.d -- remove URLs -- Done
 	TODO 3.e -- remove &amp etc. -- 
-TODO 4 -- adapt data_utils for this project
-	TODO 4.a -- implement bucketing --
-	TODO
-TODO 5 -- set up neural net -- In Progress?
+	TODO 3.f -- partition off a test set -- Done?
+TODO 4 -- adapt data_utils for this project -- Done 
+TODO 5 -- set up neural net -- In Progress
 	TODO 4.a -- import tensorflow -- Done
-	TODO 4.b -- 
-TODO 6 -- 
+	TODO 4.b -- update graph to work for my input -- In Progress
+TODO 6 -- train and test -- 

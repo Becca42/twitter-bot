@@ -309,17 +309,21 @@ def group_by_date(sourceTweets):
                 tweets from user and contexts [[all users], [all source 1],...]
         Returns:
             dictionary (tweetid, list of status objs.) -- dictionary of contexts
-                for each user tweet, keyed by unique ids
+                for each user tweet for trainging (90% of data), keyed by unique ids
+            dictionary (tweetid, list of status objs.) -- dictionary of contexts
+                for each user tweet for trainging (10% of data), keyed by unique ids
     """
     # init diction of context for each tweet
     contextByTweet = {}
+    contextByTweetValid = {}
     # get list of user tweets
     userTweets = sourceTweets[0]
 
     # get all context tweets
     contextTweets = sourceTweets[1:]
 
-    for status in userTweets:
+    for i in range(len(userTweets)):
+        status = userTweets[i]
         tweetId = status.id  # int
         tweetDatetime = status.created_at  # datetime obj
         context = []
@@ -331,10 +335,15 @@ def group_by_date(sourceTweets):
             neighbors = get_four_neighbors(source, closest, 4)
             # build context
             context = neighbors.append(closest)
-        # add context with tweet to dict
-        contextByTweet[tweetId] = context
+        # if in first 90%, add to context for training
+        if (i/float(len(userTweets))) < 0.9:
+            # add context with tweet to dict
+            contextByTweet[tweetId] = context
+        # otherwise add to validation set
+        else:
+            contextByTweetValid[tweetId] = context
 
-    return contextByTweet
+    return contextByTweet, contextByTweetValid
 
 
 def cleanse_urls(tweets):
@@ -363,7 +372,7 @@ def cleanse_urls(tweets):
     return cleansed
 
 
-def data_to_file(tweets, alltweets, user_path, context_path):
+def data_to_file(tweets, tweetsTest, alltweets, user_path_train, context_path_train, user_path_dev, context_path_dev):
     """Puts tweets into files specified by user_path and context_path, with one
     tweet per line for user, and one context group per line for context tweets
 
@@ -371,14 +380,15 @@ def data_to_file(tweets, alltweets, user_path, context_path):
             dictionary (tweetid : list of status objects) - tweets - dictionary of tweets grouped by time,
                 key - tweetid of user tweet
                 value - list of status objects of "context" tweets
+            dictionary (tweetid : list of status objects) - tweetsTest
             list of lists of tweet objs - allTweets - ...
             string - data_file - filepath to store data in
 
         Returns:
     """
-
+    # write in train data
     # open user file name
-    user_file = open(user_path, "w+")
+    user_file = open(user_path_train, "w+")
     # place user tweets - one per line - in a file
     for (tweetid, c) in tweets:
         # get text of tweet with tweetid from user
@@ -390,7 +400,7 @@ def data_to_file(tweets, alltweets, user_path, context_path):
         user_file.write(tweet)
     user_file.close()
     # open context file name
-    context_file = open(contex_path, "w+")
+    context_file = open(contex_path_train, "w+")
     # place context tweets - one per "time" - in a file
     for (tid, c) in tweets:
         # concatenate all context tweets into one string
@@ -398,8 +408,33 @@ def data_to_file(tweets, alltweets, user_path, context_path):
         for t in c:
             tweet += t.text
         # write mega-tweet to file
-        user_file.write(tweet)
-    user_file.close()
+        context_file.write(tweet)
+    context_file.close()
+
+    # write in test data
+    user_file_dev = open(user_path_dev, "w+")
+    # place user dev tweets - one per line - in a file
+    for (tweetid, c) in tweetsTest:
+        # get text of tweet with tweetid from user
+        for t in alltweets[0]:
+            if t.id == tweetid:
+                tweet = t.text
+                break
+        # add string to file
+        user_file_dev.write(tweet)
+    user_file_dev.close()
+
+    # open context dev file name
+    context_file_dev = open(context_path_dev, "w+")
+    # place context tweets - one per "time" - in a file
+    for (tid, c) in tweetsTest:
+        # concatenate all context tweets into one string
+        tweet = ""
+        for t in c:
+            tweet += t.text
+        # write mega-tweet to file
+        context_file_dev.write(tweet)
+    context_file_dev.close()
 
 
 def download_and_prepare():
@@ -452,8 +487,8 @@ def download_and_prepare():
     for i in range(len(allTweets)):
         allTweets[i] = cleanse_urls(allTweets[i])
 
-    # construct context dict
-    context_dict = group_by_date(allTweets)
+    # construct context dict for train and test
+    context_dict, context_dict_valid = group_by_date(allTweets)
 
     ##############################################################################
     # some of the following code adapted from tensorflow example file data_utils #
@@ -472,7 +507,7 @@ def download_and_prepare():
     context_file_path = os.path.join(data_dir, ".data.context")
 
     # move data into expected directories/make data available
-    data_to_file(context_dict, allTweets, user_file_path, context_file_path)
+    data_to_file(context_dict, context_dict_valid, allTweets, user_file_path, context_file_path, dev_path + ".user", dev_path + ".context")
 
     user_path = os.path.join(data_dir, "vocab%d.user" % vocab_size)
     context_path = os.path.join(data_dir, "vocab%d.context" % vocab_size)
