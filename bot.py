@@ -43,13 +43,13 @@ api = tweepy.API(auth)
 # functions adapted from tensorflow example file data_utils #
 #############################################################
 
-# TODO call this on all tweets
+
 def basic_tokenizer(sentence):
-  """Very basic tokenizer: split the sentence into a list of tokens."""
-  words = []
-  for space_separated_fragment in sentence.strip().split():
-    words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
-  return [w for w in words if w]
+    """Very basic tokenizer: split the sentence into a list of tokens."""
+    words = []
+    for space_separated_fragment in sentence.strip().split():
+        words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
+    return [w for w in words if w]
 
 
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
@@ -150,6 +150,37 @@ def sentence_to_token_ids(sentence, vocabulary,
         return [vocabulary.get(w, UNK_ID) for w in words]
     # Normalize digits by 0 before looking words up in the vocabulary.
     return [vocabulary.get(re.sub(_DIGIT_RE, b"0", w), UNK_ID) for w in words]
+
+
+def data_to_token_ids(data_path, target_path, vocabulary_path,
+                      tokenizer=None, normalize_digits=True):
+    """Tokenize data file and turn into token-ids using given vocabulary file.
+
+    This function loads data line-by-line from data_path, calls the above
+    sentence_to_token_ids, and saves the result to target_path. See comment
+    for sentence_to_token_ids on the details of token-ids format.
+
+    Args:
+    data_path: path to the data file in one-sentence-per-line format.
+    target_path: path where the file with token-ids will be created.
+    vocabulary_path: path to the vocabulary file.
+    tokenizer: a function to use to tokenize each sentence;
+      if None, basic_tokenizer will be used.
+    normalize_digits: Boolean; if true, all digits are replaced by 0s.
+    """
+    if not gfile.Exists(target_path):
+        print("Tokenizing data in %s" % data_path)
+        vocab, _ = initialize_vocabulary(vocabulary_path)
+        with gfile.GFile(data_path, mode="rb") as data_file:
+            with gfile.GFile(target_path, mode="w") as tokens_file:
+                counter = 0
+                for line in data_file:
+                    counter += 1
+                    if counter % 100000 == 0:
+                        print("  tokenizing line %d" % counter)
+                    token_ids = sentence_to_token_ids(line, vocab, tokenizer,
+                                            normalize_digits)
+                    tokens_file.write(" ".join([str(tok) for tok in token_ids]) + "\n")
 
 #####################################################
 
@@ -332,6 +363,45 @@ def cleanse_urls(tweets):
     return cleansed
 
 
+def data_to_file(tweets, alltweets, user_path, context_path):
+    """Puts tweets into files specified by user_path and context_path, with one
+    tweet per line for user, and one context group per line for context tweets
+
+        Inputs:
+            dictionary (tweetid : list of status objects) - tweets - dictionary of tweets grouped by time,
+                key - tweetid of user tweet
+                value - list of status objects of "context" tweets
+            list of lists of tweet objs - allTweets - ...
+            string - data_file - filepath to store data in
+
+        Returns:
+    """
+
+    # open user file name
+    user_file = open(user_path, "w+")
+    # place user tweets - one per line - in a file
+    for (tweetid, c) in tweets:
+        # get text of tweet with tweetid from user
+        for t in alltweets[0]:
+            if t.id == tweetid:
+                tweet = t.text
+                break
+        # add string to file
+        user_file.write(tweet)
+    user_file.close()
+    # open context file name
+    context_file = open(contex_path, "w+")
+    # place context tweets - one per "time" - in a file
+    for (tid, c) in tweets:
+        # concatenate all context tweets into one string
+        tweet = ""
+        for t in c:
+            tweet += t.text
+        # write mega-tweet to file
+        user_file.write(tweet)
+    user_file.close()
+
+
 def download_and_prepare():
     """Get tweet data into data_dir (TODO??????), create vocabularies and tokenize data.
 
@@ -382,11 +452,13 @@ def download_and_prepare():
     for i in range(len(allTweets)):
         allTweets[i] = cleanse_urls(allTweets[i])
 
+    # TODO move data into expected directories/make data available
+
     ##################################################################
     # following code adapted from tensorflow example file data_utils #
     ##################################################################
 
-    # TODO build vocab
+    # build vocab
 
     # set paths for storing data
     data_dir = "tweet_data"
@@ -401,7 +473,6 @@ def download_and_prepare():
     create_vocabulary(context_path, train_path + ".context", vocab_size, None)  # None: user default tokenizer
     create_vocabulary(user_path, train_path + ".user", vocab_size, None)
 
-    # TOOD tokenize
     # Create token ids for the training data.
     user_train_ids_path = train_path + (".ids%d.user" % vocab_size)
     context_train_ids_path = train_path + (".ids%d.context" % vocab_size)
@@ -413,8 +484,8 @@ def download_and_prepare():
     # Create token ids for the development data.
     user_dev_ids_path = dev_path + (".ids%d.user" % vocab_size)
     context_dev_ids_path = dev_path + (".ids%d.context" % vocab_size)
-    data_to_token_ids(dev_path + ".fr", user_dev_ids_path, user_path, None)
-    data_to_token_ids(dev_path + ".en", context_dev_ids_path, context_path, None)
+    data_to_token_ids(dev_path + ".user", user_dev_ids_path, user_path, None)
+    data_to_token_ids(dev_path + ".context", context_dev_ids_path, context_path, None)
 
     # TODO return paths to directories of input and output
     return (user_train_ids_path, context_train_ids_path,
