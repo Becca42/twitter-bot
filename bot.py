@@ -75,23 +75,23 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
         vocab = {}
         with gfile.GFile(data_path, mode="rb") as f:
             counter = 0
-        for line in f:
-            counter += 1
-            if counter % 100000 == 0:
-                print("  processing line %d" % counter)
-            tokens = tokenizer(line) if tokenizer else basic_tokenizer(line)
-            for w in tokens:
-                word = re.sub(_DIGIT_RE, b"0", w) if normalize_digits else w
-                if word in vocab:
-                    vocab[word] += 1
-                else:
-                    vocab[word] = 1
-        vocab_list = _START_VOCAB + sorted(vocab, key=vocab.get, reverse=True)
-        if len(vocab_list) > max_vocabulary_size:
-            vocab_list = vocab_list[:max_vocabulary_size]
-        with gfile.GFile(vocabulary_path, mode="wb") as vocab_file:
-            for w in vocab_list:
-                vocab_file.write(w + b"\n")
+            for line in f:
+                counter += 1
+                if counter % 100000 == 0:
+                    print("  processing line %d" % counter)
+                tokens = tokenizer(line) if tokenizer else basic_tokenizer(line)
+                for w in tokens:
+                    word = re.sub(_DIGIT_RE, b"0", w) if normalize_digits else w
+                    if word in vocab:
+                        vocab[word] += 1
+                    else:
+                        vocab[word] = 1
+            vocab_list = _START_VOCAB + sorted(vocab, key=vocab.get, reverse=True)
+            if len(vocab_list) > max_vocabulary_size:
+                vocab_list = vocab_list[:max_vocabulary_size]
+            with gfile.GFile(vocabulary_path, mode="wb") as vocab_file:
+                for w in vocab_list:
+                    vocab_file.write(w + b"\n")
 
 
 def initialize_vocabulary(vocabulary_path):
@@ -203,12 +203,12 @@ def get_all_tweets(user, alltweets):
 
     #save most recent tweets
     alltweets.extend(new_tweets)
-    print alltweets[0].text
+    #print alltweets[0].text
 
     #save the id of the oldest tweet less one
     oldest = alltweets[-1].id - 1
 
-    print "starting loop"
+    #print "starting loop"
     #keep grabbing tweets until there are no tweets left to grab
     while len(new_tweets) > 0:
 
@@ -220,9 +220,6 @@ def get_all_tweets(user, alltweets):
 
         #update the id of the oldest tweet less one
         oldest = alltweets[-1].id - 1
-
-    print alltweets[-1].text
-    print len(alltweets)
 
 
 def date_posted(tweet):
@@ -255,18 +252,18 @@ def binary_search_tweets_by_date(tweets, targetDate, start, end):
         # TODO will this cover edge cases?? (end and beginning of list?)
         return start - 1
 
-    middle = (start + end) / 2
+    middle = int((start + end) / 2)
     value = tweets[middle].created_at
 
     if value < targetDate:
-        return binarySearchTweetsByDate(tweets, targetDate, middle+1, end)
+        return binary_search_tweets_by_date(tweets, targetDate, middle+1, end)
     if value > targetDate:
-        return binarySearchTweetsByDate(tweets, targetDate, start, middle-1)
+        return binary_search_tweets_by_date(tweets, targetDate, start, middle-1)
     # found exact match
     return middle
 
 
-def get_n_neighbors(values, index, n):
+def get_n_neighbors(values, index, n): # TODO is broken, only returns None - must fix
     """ Returns a list of the n closest objects in values to index.
 
         Inputs:
@@ -280,16 +277,16 @@ def get_n_neighbors(values, index, n):
     diff = 0
     # check that n/2 lower neighbors exist
     if index >= (n/2):
-        for i in range(n/2):
+        for i in range(int(n/2)):
             neighbors.append(values[index - i])
     # add as many as possible, add extra from end if possible
     else:
-        diff = (n/2) - index
-        for i in range((n/2) - diff):
+        diff = int(n/2) - index
+        for i in range(int(n/2) - diff):
             neighbors.append(values[index - i])
     # check that n/2 + diff upper neighbors exist, add them
-    if len(values) > (index + n/2 + diff):
-        for i in range(n/2 + diff):
+    if len(values) > (index + int(n/2) + diff):
+        for i in range(int(n/2) + diff):
             neighbors.append(values[index - i])
     # not enough stuff, add as many as possible
     else:
@@ -330,11 +327,11 @@ def group_by_date(sourceTweets):
         # find five closest tweets form each context (by time)
         for source in contextTweets:
             # get context tweet closest (at or before) status
-            closest = binary_search_tweets_by_date(source, tweetDatetime, 0, len(source - 1))
+            closest = binary_search_tweets_by_date(source, tweetDatetime, 0, len(source) - 1)
             # get 4 neighbors (2 before and 2 after if possible, or closest)
-            neighbors = get_four_neighbors(source, closest, 4)
+            neighbors = get_n_neighbors(source, closest, 4)
             # build context
-            context = neighbors.append(closest)
+            context.extend(neighbors)
         # if in first 90%, add to context for training
         if (i/float(len(userTweets))) < 0.9:
             # add context with tweet to dict
@@ -346,8 +343,8 @@ def group_by_date(sourceTweets):
     return contextByTweet, contextByTweetValid
 
 
-def cleanse_urls(tweets):
-    """ identify and replace urls in tweets
+def cleanse_tweets(tweets):
+    """ identify and replace urls and unicode \u2018, \u2019 in tweets
 
         Inputs:
             list of strings -- tweets -- list of tweets
@@ -363,6 +360,13 @@ def cleanse_urls(tweets):
         # split tweet into list
         tList = tweet.text.split()
         for i in range(len(tList)):
+            # replace "bad" quotes with normal quotes
+            # regex pattern from http://stackoverflow.com/questions/24358361/removing-u2018-and-u2019-character
+            tList[i] = re.sub(u"(\u2018|\u2019|\u201c|\u201d)", "'", tList[i])
+            tList[i] = re.sub(u"(\xe9)", "e", tList[i])
+            tList[i] = re.sub(u"(\u2014)", "-", tList[i])
+            # remove other non-ascii unicode
+            tList[i] = re.sub(r'[^\x00-\x7F]+', '', tList[i])
             match = regURL.match(tList[i])
             if match:
                 tList[i] = "URL"
@@ -390,50 +394,50 @@ def data_to_file(tweets, tweetsTest, alltweets, user_path_train, context_path_tr
     # open user file name
     user_file = open(user_path_train, "w+")
     # place user tweets - one per line - in a file
-    for (tweetid, c) in tweets:
+    for tweetid in tweets:
         # get text of tweet with tweetid from user
         for t in alltweets[0]:
             if t.id == tweetid:
                 tweet = t.text
                 break
         # add string to file
-        user_file.write(tweet)
+        user_file.write(tweet + "\n")
     user_file.close()
     # open context file name
-    context_file = open(contex_path_train, "w+")
+    context_file = open(context_path_train, "w+")
     # place context tweets - one per "time" - in a file
-    for (tid, c) in tweets:
+    for tid, c in tweets.iteritems():
         # concatenate all context tweets into one string
         tweet = ""
         for t in c:
             tweet += t.text
         # write mega-tweet to file
-        context_file.write(tweet)
+        context_file.write(tweet + "\n")
     context_file.close()
 
     # write in test data
     user_file_dev = open(user_path_dev, "w+")
     # place user dev tweets - one per line - in a file
-    for (tweetid, c) in tweetsTest:
+    for tweetid in tweetsTest:
         # get text of tweet with tweetid from user
         for t in alltweets[0]:
             if t.id == tweetid:
                 tweet = t.text
                 break
         # add string to file
-        user_file_dev.write(tweet)
+        user_file_dev.write(tweet + "\n")
     user_file_dev.close()
 
     # open context dev file name
     context_file_dev = open(context_path_dev, "w+")
     # place context tweets - one per "time" - in a file
-    for (tid, c) in tweetsTest:
+    for tid, c in tweetsTest.iteritems():
         # concatenate all context tweets into one string
         tweet = ""
         for t in c:
             tweet += t.text
         # write mega-tweet to file
-        context_file_dev.write(tweet)
+        context_file_dev.write(tweet + "\n")
     context_file_dev.close()
 
 
@@ -485,7 +489,7 @@ def download_and_prepare():
     # clean urls of all tweets
     allTweets = [userHistory, news1History, news2History, news3History, news4History, news5History]
     for i in range(len(allTweets)):
-        allTweets[i] = cleanse_urls(allTweets[i])
+        allTweets[i] = cleanse_tweets(allTweets[i])
 
     # construct context dict for train and test
     context_dict, context_dict_valid = group_by_date(allTweets)
@@ -496,9 +500,9 @@ def download_and_prepare():
 
     # set paths for storing data
     data_dir = "tweet_data"
-    train_dir = "tweet_train"
-    train_path = os.path.join(data_dir, "context")
-    dev_path = os.path.join(data_dir, "test1")
+    train_dir = "train_dir"
+    train_path = os.path.join(train_dir, "train")
+    dev_path = os.path.join(train_dir, "test1")
      # set vocab size
     vocab_size = 500000  # TODO update if necessary
 
@@ -511,14 +515,14 @@ def download_and_prepare():
 
     user_path = os.path.join(data_dir, "vocab%d.user" % vocab_size)
     context_path = os.path.join(data_dir, "vocab%d.context" % vocab_size)
-    create_vocabulary(context_path, train_path + ".data.context", vocab_size, None)  # None: user default tokenizer
-    create_vocabulary(user_path, train_path + ".data.user", vocab_size, None)
+    create_vocabulary(context_path, context_file_path, vocab_size, None)  # None: user default tokenizer
+    create_vocabulary(user_path, user_file_path, vocab_size, None)
 
     # Create token ids for the training data.
     user_train_ids_path = train_path + (".ids%d.user" % vocab_size)
     context_train_ids_path = train_path + (".ids%d.context" % vocab_size)
-    data_to_token_ids(train_path + ".user", user_train_ids_path, user_path, None)
-    data_to_token_ids(train_path + ".context", context_train_ids_path, context_path, None)
+    data_to_token_ids(user_file_path, user_train_ids_path, user_path, None)
+    data_to_token_ids(context_file_path, context_train_ids_path, context_path, None)
 
     print("made it")
 

@@ -40,6 +40,7 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
 #from tensorflow.models.rnn.translate import data_utils
+import bot
 from tensorflow.models.rnn.translate import seq2seq_model
 
 
@@ -71,7 +72,9 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
+#_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
+# updated buckets for heftier data ;)
+_buckets = [(25, 10), (100, 25), (250, 35), (300, 50)]
 
 
 def read_data(source_path, target_path, max_size=None):
@@ -89,6 +92,9 @@ def read_data(source_path, target_path, max_size=None):
       into the n-th bucket, i.e., such that len(source) < _buckets[n][0] and
       len(target) < _buckets[n][1]; source and target are lists of token-ids.
   """
+  print("sourcepath: "+source_path)
+  print("target_path: "+target_path)
+
   data_set = [[] for _ in _buckets]
   with tf.gfile.GFile(source_path, mode="r") as source_file:
     with tf.gfile.GFile(target_path, mode="r") as target_file:
@@ -96,7 +102,7 @@ def read_data(source_path, target_path, max_size=None):
       counter = 0
       while source and target and (not max_size or counter < max_size):
         counter += 1
-        if counter % 100000 == 0:
+        if counter % 100 == 0:
           print("  reading data line %d" % counter)
           sys.stdout.flush()
         source_ids = [int(x) for x in source.split()]
@@ -104,8 +110,9 @@ def read_data(source_path, target_path, max_size=None):
         target_ids.append(bot.EOS_ID)
         for bucket_id, (source_size, target_size) in enumerate(_buckets):
           if len(source_ids) < source_size and len(target_ids) < target_size:
-            data_set[bucket_id].append([source_ids, target_ids])
-            break
+          	print("in here!!!!!!")
+          	data_set[bucket_id].append([source_ids, target_ids])
+          	break
         source, target = source_file.readline(), target_file.readline()
   return data_set
 
@@ -139,7 +146,8 @@ def train():
   """Train a en->fr translation model using WMT data."""
   # Prepare WMT data.
   print("Preparing WMT data in %s" % FLAGS.data_dir)
-  context_train, user_train, context_dev, user_dev, _, _ = download_and_prepare() # TODO rename and replace return values
+  #en_train, fr_train, en_dev, fr_dev, _, _ = download_and_prepare()
+  user_train, context_train, context_dev, user_dev, _, _ = bot.download_and_prepare()
 
   print("returned")
 
@@ -151,14 +159,15 @@ def train():
     # Read data into buckets and compute their sizes.
     print ("Reading development and training data (limit: %d)."
            % FLAGS.max_train_data_size)
-    dev_set = read_data(en_dev, fr_dev)
-    train_set = read_data(en_train, fr_train, FLAGS.max_train_data_size)
+    dev_set = read_data(context_dev, user_dev)
+    train_set = read_data(context_train, user_train, FLAGS.max_train_data_size)
     train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
     train_total_size = float(sum(train_bucket_sizes))
 
     # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
     # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
     # the size if i-th training bucket, as used later.
+    print(train_total_size)
     train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
                            for i in xrange(len(train_bucket_sizes))]
 
@@ -224,8 +233,8 @@ def decode():
                                  "vocab%d.en" % FLAGS.en_vocab_size)
     fr_vocab_path = os.path.join(FLAGS.data_dir,
                                  "vocab%d.fr" % FLAGS.fr_vocab_size)
-    en_vocab, _ = data_utils.initialize_vocabulary(en_vocab_path)
-    _, rev_fr_vocab = data_utils.initialize_vocabulary(fr_vocab_path)
+    en_vocab, _ = bot.initialize_vocabulary(en_vocab_path)
+    _, rev_fr_vocab = bot.initialize_vocabulary(fr_vocab_path)
 
     # Decode from standard input.
     sys.stdout.write("> ")
@@ -233,7 +242,7 @@ def decode():
     sentence = sys.stdin.readline()
     while sentence:
       # Get token-ids for the input sentence.
-      token_ids = data_utils.sentence_to_token_ids(tf.compat.as_bytes(sentence), en_vocab)
+      token_ids = bot.sentence_to_token_ids(tf.compat.as_bytes(sentence), en_vocab)
       # Which bucket does it belong to?
       bucket_id = len(_buckets) - 1
       for i, bucket in enumerate(_buckets):
@@ -252,8 +261,8 @@ def decode():
       # This is a greedy decoder - outputs are just argmaxes of output_logits.
       outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
       # If there is an EOS symbol in outputs, cut them at that point.
-      if data_utils.EOS_ID in outputs:
-        outputs = outputs[:outputs.index(data_utils.EOS_ID)]
+      if bot.EOS_ID in outputs:
+        outputs = outputs[:outputs.index(bot.EOS_ID)]
       # Print out French sentence corresponding to outputs.
       print(" ".join([tf.compat.as_str(rev_fr_vocab[output]) for output in outputs]))
       print("> ", end="")
