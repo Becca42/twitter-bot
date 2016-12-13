@@ -452,13 +452,12 @@ def download_and_prepare():
     for i in range(len(allTweets)):
         allTweets[i] = cleanse_urls(allTweets[i])
 
-    # TODO move data into expected directories/make data available
+    # construct context dict
+    context_dict = group_by_date(allTweets)
 
-    ##################################################################
-    # following code adapted from tensorflow example file data_utils #
-    ##################################################################
-
-    # build vocab
+    ##############################################################################
+    # some of the following code adapted from tensorflow example file data_utils #
+    ##############################################################################
 
     # set paths for storing data
     data_dir = "tweet_data"
@@ -468,16 +467,23 @@ def download_and_prepare():
      # set vocab size
     vocab_size = 500000  # TODO update if necessary
 
+    # paths for storing initial data
+    user_file_path = os.path.join(data_dir, ".data.user")
+    context_file_path = os.path.join(data_dir, ".data.context")
+
+    # move data into expected directories/make data available
+    data_to_file(context_dict, allTweets, user_file_path, context_file_path)
+
     user_path = os.path.join(data_dir, "vocab%d.user" % vocab_size)
     context_path = os.path.join(data_dir, "vocab%d.context" % vocab_size)
-    create_vocabulary(context_path, train_path + ".context", vocab_size, None)  # None: user default tokenizer
-    create_vocabulary(user_path, train_path + ".user", vocab_size, None)
+    create_vocabulary(context_path, train_path + ".data.context", vocab_size, None)  # None: user default tokenizer
+    create_vocabulary(user_path, train_path + ".data.user", vocab_size, None)
 
     # Create token ids for the training data.
     user_train_ids_path = train_path + (".ids%d.user" % vocab_size)
     context_train_ids_path = train_path + (".ids%d.context" % vocab_size)
     data_to_token_ids(train_path + ".user", user_train_ids_path, user_path, None)
-    data_to_token_ids(train_path + ".en", en_train_ids_path, en_vocab_path, None)
+    data_to_token_ids(train_path + ".context", context_train_ids_path, context_path, None)
 
     print("made it")
 
