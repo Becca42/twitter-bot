@@ -76,7 +76,9 @@ FLAGS = tf.app.flags.FLAGS
 # updated buckets for heftier data ;) attempt 1
 #_buckets = [(25, 10), (100, 25), (250, 35), (300, 50)]
 # bucket resizing attept 2
-_buckets = [(50, 25), (100, 30), (250, 35), (300, 50)]
+#_buckets = [(50, 25), (100, 30), (250, 35), (300, 50)]
+# bucket resizing attept 3
+_buckets = [(100, 25), (200, 30), (300, 35), (400, 35)]
 
 
 def read_data(source_path, target_path, max_size=None):

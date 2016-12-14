@@ -233,7 +233,6 @@ def date_posted(tweet):
         Returns:
             datetime.date -- the date the tweet was created (posted)
     """
-    print(tweet.created_at.date())
     return tweet.created_at.date()
 
 
@@ -265,7 +264,6 @@ def binary_search_tweets_by_date(tweets, targetDate, start, end):
     if value < targetDate:
         return binary_search_tweets_by_date(tweets, targetDate, start, middle-1)
     # found exact match
-    print("middle: %d" % middle)
     return middle
 
 
@@ -333,12 +331,6 @@ def group_by_date(sourceTweets):
         # find five closest tweets form each context (by time)
         for source in contextTweets:
             # get context tweet closest (at or before) status
-            print("targetDate:")
-            print(tweetDatetime)
-            print("earliest: ")
-            print(source[0].created_at)
-            print("latest:")
-            print(source[-1].created_at)
             closest = binary_search_tweets_by_date(source, tweetDatetime, 0, len(source) - 1)
             # get 4 neighbors (2 before and 2 after if possible, or closest)
             neighbors = get_n_neighbors(source, closest, 4)
@@ -381,7 +373,8 @@ def cleanse_tweets(tweets):
             tList[i] = re.sub(r'[^\x00-\x7F]+', '', tList[i])
             match = regURL.match(tList[i])
             if match:
-                tList[i] = "URL"
+                #tList[i] = "URL"
+                tList[i] = ""
         # rejoin updated list into string, add to cleansed list
         tweet.text = ' '.join(tList)
         cleansed.append(tweet)
