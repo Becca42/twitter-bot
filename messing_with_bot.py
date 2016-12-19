@@ -406,19 +406,19 @@ def data_to_file(tweets, tweetsTest, alltweets, user_path_train, context_path_tr
             if t.id == tweetid:
                 tweet = t.text
                 break
-        # add string to file
-        user_file.write(tweet + "\n")
+        # add string to file n times (1/context)
+        for i in tweets[tweetid]:
+            user_file.write(tweet + "\n")
     user_file.close()
     # open context file name
     context_file = open(context_path_train, "w+")
     # place context tweets - one per "time" - in a file
     for tid, c in tweets.iteritems():
-        # concatenate all context tweets into one string
-        tweet = ""
+        # write each context tweet to file
         for t in c:
-            tweet = tweet + " " + t.text
-        # write mega-tweet to file
-        context_file.write(tweet + "\n")
+            tweet = t.text
+            # write tweet to file
+            context_file.write(tweet + "\n")
     context_file.close()
 
     # write in test data
@@ -430,20 +430,20 @@ def data_to_file(tweets, tweetsTest, alltweets, user_path_train, context_path_tr
             if t.id == tweetid:
                 tweet = t.text
                 break
-        # add string to file
-        user_file_dev.write(tweet + "\n")
+        # add string to file n times (1/context)
+        for i in tweets[tweetid]:
+            user_file.write(tweet + "\n")
     user_file_dev.close()
 
     # open context dev file name
     context_file_dev = open(context_path_dev, "w+")
     # place context tweets - one per "time" - in a file
     for tid, c in tweetsTest.iteritems():
-        # concatenate all context tweets into one string
-        tweet = ""
+        # write each context tweet to file
         for t in c:
-            tweet = tweet + " " + t.text
-        # write mega-tweet to file
-        context_file_dev.write(tweet + "\n")
+            tweet = t.text
+            # write tweet to file
+            context_file_dev.write(tweet + "\n")
     context_file_dev.close()
 
 
