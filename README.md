@@ -25,16 +25,18 @@ TODO 1 -- set up twitter account -- Done
 TODO 2 -- gather user data -- Done
 	TODO 2.a -- find API tool to collect data -- Done (Tweepy)
 	TODO 2.b -- pick a user -- Done (Snopes.com)
-TODO 3 -- split into training and test set --
+TODO 3 -- split into training and test set -- Done
 	TODO 3.a decide what to test on (e.g. snopes + trending hashtags, snopes + 5-10 other news sources) -- Done (other news twitters)
 	TODO 3.b -- get data from "environment" users -- Done (nytimes, foxnews, reuters, breitbart, wapo)
 	TODO 3.b.i -- parallelize requests to speed up process -- Done
 	TODO 3.c -- partition by date -- Done
 	TODO 3.d -- remove URLs -- Done
-	TODO 3.e -- remove &amp etc. -- 
+	TODO 3.e -- remove unicode things -- Done
 	TODO 3.f -- partition off a test set -- Done?
 TODO 4 -- adapt data_utils for this project -- Done 
-TODO 5 -- set up neural net -- In Progress
+TODO 5 -- set up neural net -- Done
 	TODO 4.a -- import tensorflow -- Done
-	TODO 4.b -- update graph to work for my input -- In Progress
-TODO 6 -- train and test -- 
+	TODO 4.b -- update graph to work for my input -- Done
+TODO 6 -- reformat for 1:1 instead of 1:25 -- In Progress
+TODO 7 -- tweak net if 1:1 offers better results -- 
+TODO 8 -- try with more context sources --

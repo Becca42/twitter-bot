@@ -251,7 +251,7 @@ def binary_search_tweets_by_date(tweets, targetDate, start, end):
         int - index of closest tweet that is at or before datetime
     """
     # no exact match in tweets
-    if (start > end):
+    if (start >= end):
         # TODO will this cover edge cases?? (end and beginning of list?)
         print("closest? %d" % (start - 1))
         return start - 1
@@ -462,11 +462,11 @@ def download_and_prepare():
       (6) path to the French vocabulary file.
     """
     # set source twitter IDS
-    user = 14294848  # @snopes
+    user = 759251  # @CNN
     news1 = 807095  # @nytimes
     news2 = 1367531  # @FoxNews
     news3 = 1652541  # @Reuters
-    news4 = 759251  # @CNN
+    news4 = 3108351  # @WSJ
     news5 = 2467791  # @washingtonpost
 
     # grab all tweets from user
